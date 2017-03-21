@@ -1,14 +1,20 @@
 #ifndef USER_H
 #define USER_H
 
+#include <fstream>
+#include <iostream>
+#include <stdlib.h>
+#include <vector>
+
 using namespace std;
 
 class user{
 	public:
-		string pub_key;
+		user();
+		int getPubKey();
+		int publicKey;
 	private:	
-		string pri_key;
-		string hashFunc(string,string);
+		int privateKey;
 };
 
 #endif
