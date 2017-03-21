@@ -20,6 +20,11 @@ def isPrime(number):
 
 	return 1;
 
+primes = []
 for num in range(LOWER, UPPER, 2):
 	if isPrime(num) == 1:
-		print num
+		primes.append(num)
+
+f = open("primes.txt")
+f.write(primes)
+f.close()
