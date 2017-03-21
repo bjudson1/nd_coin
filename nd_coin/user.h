@@ -8,6 +8,7 @@ class user{
 		string pub_key;
 	private:	
 		string pri_key;
+		string hashFunc(string,string);
 };
 
 #endif

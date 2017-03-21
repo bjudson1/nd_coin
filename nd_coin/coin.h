@@ -5,10 +5,12 @@ using namespace std;
 
 class coin{
 	public:
+		coin();
 		void signCoin();
-		string getmessage();
+		string getHash();
 	private:	
-		string message;
+		string hash;
+		void setHash(string,string);
 };
 
 #endif
