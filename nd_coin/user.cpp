@@ -1,4 +1,5 @@
 #include "user.h"
+#include <fstream>
 
 user::user(){
 	ifstream ifs;
@@ -11,13 +12,25 @@ user::user(){
 
 
 	//primes.txt contains all primes length 6
-	ifs.open("./primes/primes.txt");	
-	//get 2 prime numbers length 6
+	ifs.open("./primes/primes.txt");
+	ofstream temp("./primes/temp.txt");	
+	// get 2 prime numbers length 6
 	getline(ifs,data);
 	prime1 = atoi(data.c_str());
 	getline(ifs,data);
 	prime2 = atoi(data.c_str());
+	//Update the text file to no longer include used primes
+	while (!ifs.eof())
+	{
+		getline(ifs,data);
+		temp << data << endl;
+	}
+	ifs.clear();			// clear the eof and fail bits
 	ifs.close();
+	temp.close();
+	// delete old file, rename temp file to primes.txt to "update" primes.txt
+	remove("./primes/primes.txt");
+	rename("./primes/temp.txt", "./primes/primes.txt");
 	
 	n = prime1 * prime2;
 	phi_n = (prime1-1) * (prime2-1);
