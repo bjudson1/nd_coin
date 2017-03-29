@@ -8,7 +8,7 @@ using namespace std;
 
 // Node description: used as single digit holders in the linked list implementation of key
 struct node {
-	Node (const int &);						// constructor
+	node (const int &);						// constructor
 	int data;
 	node *next;
 };
@@ -22,7 +22,11 @@ class key {
 		void pushfront(const int &);		// adds a new digit to the key
 
 		// overloaded operators
-		// !!!!! TODO !!!!!
+		key operator=(const key &);
+		key operator+(const key &);
+		key operator*(const key &);
+		// key operator-(const key &); ?
+		// key operator/(const key &); ?
 
 		// members
 		node *head;
