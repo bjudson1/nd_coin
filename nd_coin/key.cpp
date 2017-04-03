@@ -6,7 +6,6 @@ for our overall purposes in encryption */
 
 #include "key.h"
 #include <cstddef>
-#include <stdlib>
 #include <iostream>
 
 using namespace std;
@@ -61,7 +60,7 @@ key key::operator+(const key &other)
 	int carry = 0;
 
 	node *p1 = this->head;
-	node *p2 = this->head;
+	node *p2 = other.head;
 
 
 	while (p1 != nullptr || p2 != nullptr)
@@ -102,15 +101,43 @@ key key::operator+(const key &other)
 			p1 = p1->next;
 		}
 	}
-	*this = sum;
+	*this = sum;										// this step avoids a seg fault when trying to return the key made in the scope of the function
 	return *this;
 }
 
 key key::operator*(const key &other)
 {
-	key product;
+	key product, needToAdd;
 
-	int
+	int carry = 0, holder = 0;								// carry used in addition, holder used for holding 0 place and so on when increasing multipliers
+	int total, digit;										// used in adding digits to the needToAdd list/key
+
+	node *p1 = this->head;
+	node *p2 = other.head;
+
+	while (p1 != nullptr)									// primary computation while loop
+	{
+		// make sure the placeholder for multiplication is correct
+		for (int i = 0; i < holder; i++)
+		{
+			needToAdd.pushfront(0);
+		}
+		carry = 0;											// initialize carry to 0 for new product in secondary computation
+
+		while (p2 != nullptr)								// secondary computation while loop
+		{
+			total = p2->data * p1->data;
+			digit = (total % 10);
+			needToAdd.pushfront(digit + carry);
+			carry = (total - digit)/10;
+		}
+		holder += 1;										// update carry so that for loop above adds appropriate amount of placeholder 0s
+
+		product = product + needToAdd;
+	}
+
+	*this = product;									// this step avoids a seg fault when trying to return the key made in the scope of the function
+	return *this;
 }
 
 
