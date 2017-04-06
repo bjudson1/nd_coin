@@ -20,17 +20,19 @@ class key {
 		key();								// constructor				
 		~key();								// deconstructor
 		void pushfront(const int &);		// adds a new digit to the key
+		void print();
 
 		// overloaded operators
 		key operator=(const key &);
 		key operator+(const key &);
 		key operator*(const key &);
-		// key operator-(const key &); ?
+		key operator-(const key &);
 		// key operator/(const key &); ?
 
 		// members
 		node *head;
 		node *newNode(const int &);			// helper function, creates a new node
+		int size;
 };
 
 #endif

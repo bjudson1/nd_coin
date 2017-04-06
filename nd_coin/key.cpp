@@ -13,7 +13,7 @@ using namespace std;
 node::node(const int &digit) :data(digit), next(nullptr)
 {}
 
-key::key(): head(nullptr) {}
+key::key(): head(nullptr) {size = 0;}
 
 key::~key()
 {
@@ -35,8 +35,17 @@ void key::pushfront(const int &newValue)
 {
 	node *newNode = new node(newValue);
 
+	this->size += 1;
 	newNode->next = head;
 	head = newNode;
+}
+
+void key::print()
+{
+	node * p = head;
+	while (p->next != nullptr)
+		cout << p->data;
+	cout << endl;
 }
 
 key key::operator=(const key &assign)
@@ -51,6 +60,7 @@ key key::operator=(const key &assign)
 		traverseNode = traverseNode->next;
 	}
 
+	this->size = assign.size;
 	return *this;
 }
 
@@ -101,6 +111,7 @@ key key::operator+(const key &other)
 			p1 = p1->next;
 		}
 	}
+
 	*this = sum;										// this step avoids a seg fault when trying to return the key made in the scope of the function
 	return *this;
 }
@@ -140,8 +151,41 @@ key key::operator*(const key &other)
 	return *this;
 }
 
+key key::operator-(const key &other)
+{
+	key difference;
+
+	int carry = 0;
+
+	node * p1 = this->head;
+	node * p2 = other.head;
+
+
+}
 
 int main()
 {
+	key key1, key2;
 
+	cout << "check1" << endl;
+	int x = 1, y = 2, z = 3;
+
+	for (int i = 0; i < 2; i++)
+	{
+		key1.pushfront(x);
+		key2.pushfront(y);
+	}
+
+	cout << "check2" << endl;
+	key key3 = key1 + key2;
+	key3.print();
+
+	cout << "check3" << endl;
+	key key4 = key1 * key2;
+	key4.print();
+
+	cout << "complete" << endl;
 }
+
+
+
