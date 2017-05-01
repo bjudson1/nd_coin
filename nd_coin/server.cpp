@@ -28,10 +28,10 @@ struct coin{
 	int serial_number;
 };
 
-int main(){
-
+int main(int argc, char *argv[]){
 	int client,server;
-	int portNum = 1500;
+	int argind = 1;
+	int portNum = 8000;
 	int bufsize=1024;
 	char buffer[bufsize];
 	bool isExit = false;
@@ -39,13 +39,19 @@ int main(){
 	struct sockaddr_in server_addr;
     socklen_t size;
 
+    the_bank.giveCoin("bob",10);
+
+    //get port number
+    if(argc > 1)
+    	portNum =atoi(argv[argind++]);
+
     //create socket
     if((client = socket(AF_INET, SOCK_STREAM, 0)) < 0){
         cout << "\nError establishing socket..." << endl;
         exit(1);
     }
 
-    cout << "\n=> Socket server has been created..." << endl;
+    cout<<"Socket server has been created on port "<<portNum<<endl;
 
     //set addr info
     server_addr.sin_family = AF_INET;
@@ -58,7 +64,6 @@ int main(){
         return -1;
     }
     size = sizeof(server_addr);
-
 
     //listen
     cout << "=> Looking for clients..." << endl;
@@ -74,44 +79,77 @@ int main(){
 
     //while connection to client
     while (server > 0){
+        
+    	//confirm conection
         strcpy(buffer, "=> Server connected...\n");
         send(server, buffer, bufsize, 0);
+        
         cout << "=> Connected with the client #" << clientCount << ", you are good to go..." << endl;
         cout << "\n=> Enter # to end the connection\n" << endl;
 
-        cout << "Client: ";
-        do {
-            recv(server, buffer, bufsize, 0);
-            cout << buffer << " ";
-            if (*buffer == '#') {
-                *buffer = '*';
-                isExit = true;
-            }
-        } while (*buffer != '*');
+        do{
+        	string sender = "",reciever = "",coin = "";
+        	int i=0;
 
-        do {
-            cout << "\nServer: ";
-            do {
-                cin >> buffer;
-                send(server, buffer, bufsize, 0);
-                if (*buffer == '#') {
-                    send(server, buffer, bufsize, 0);
-                    *buffer = '*';
-                    isExit = true;
-                }
-            } while (*buffer != '*');
+        	recv(server, buffer, bufsize, 0);
+        	
+        	//parse message for type
+        	char type = buffer[i++];
+        	i++;
 
-            cout << "Client: ";
-            do {
-                recv(server, buffer, bufsize, 0);
-                cout << buffer << " ";
-                if (*buffer == '#') {
-                    *buffer == '*';
-                    isExit = true;
-                }
-            } while (*buffer != '*');
-        } while (!isExit);
+        	int balance;
+        	string message;
 
+        	//decide what to do
+        	switch(type){
+        		//get balance
+        		case '1':
+        			cout<<"Getting Balance\n";
+
+        			while(buffer[i] != ' '){
+        				sender += buffer[i++];
+        			}
+        			i++;
+
+        			balance = the_bank.getBalance(sender);
+        			message = to_string(balance);
+
+        			send(server, message.c_str(), sizeof(message), 0);
+        		break;
+
+        		//transfer coin
+        		case '2':
+        			cout<<"Transfer Request\n";
+
+					while(buffer[i] != ' '){
+        				sender += buffer[i++];
+        			}
+        			i++;
+        			while(buffer[i] != ' '){
+        				reciever += buffer[i++];
+        			}
+        			i++;
+        			while(buffer[i] != '*'){
+        				coin += buffer[i++];
+        			}
+
+					if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
+        				message = "s";
+
+        				send(server, message.c_str(), sizeof(message), 0);
+
+        				isExit = true;
+        			}
+
+        			else{
+        				message = "f";
+
+        				send(server, message.c_str(), sizeof(message), 0);
+        			}
+        		break;
+        	};
+        }while(!isExit);
+   
 
 	//close
         // inet_ntoa converts packet data to IP, which was taken from client
@@ -124,38 +162,11 @@ int main(){
 
     close(client);
     return 0;
-
-/*
-
-	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
-	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
-
-	//give bob coin
-	the_bank.giveCoin("bob",2);
-
-
-	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
-	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
-
-	//transfer coin 
-	if(makeTransfer("bob","cindy",2))
-		cout<<"successful transfer\n";
-	else{
-		cout<<"transfer failed\n";
-	}
-
-	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
-	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
-
-	return 0;
-
-*/
 }
 
 
 
 bool makeTransfer(string sender,string reciever,int coin){
-	
 	//transfer
 	if(the_bank.takeCoin(sender,coin)){
 		the_bank.giveCoin(reciever,coin);
