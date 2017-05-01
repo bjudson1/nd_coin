@@ -1,27 +1,48 @@
 #include "ledger.h"
 #include "bank.h"
 
+#include "./crypto++/rsa.h"
+#include "crypto++/osrng.h"
+//#include "crypto++/base32.h"
+#include "crypto++/files.h"
+
+
 using namespace std;
 
 bool makeTransfer(string,string,int);
+ledger messageLedger = ledger();
+
 
 bank the_bank;
 
+struct coin{
+	int serial_number;
+};
+
 int main(){
-	ledger messageLedger = ledger();
+
+
+ CryptoPP::AutoSeededRandomPool rng;
+ CryptoPP::InvertibleRSAFunction privkey;
+ privkey.Initialize(rng, 1024);
+	//srand (time(NULL));
 
 	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
 	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
 
 	//give bob coin
-	the_bank.setBalance("bob",1);
+	the_bank.giveCoin("bob",2);
 
 
 	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
 	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
 
 	//transfer coin 
-	makeTransfer("bob","cindy",1);
+	if(makeTransfer("bob","cindy",2))
+		cout<<"successful transfer\n";
+	else{
+		cout<<"transfer failed\n";
+	}
 
 	cout<<"Bob:"<<the_bank.getBalance("bob")<<endl;
 	cout<<"cindy:"<<the_bank.getBalance("cindy")<<endl;
@@ -29,17 +50,17 @@ int main(){
 	return 0;
 }
 
-bool makeTransfer(string sender,string reciever,int amount){
-	//check to see if they have large enough balance
-	if(the_bank.getBalance(sender) >= amount){
-		//transfer
-		int newBalance = the_bank.getBalance(sender) - amount;
-		the_bank.setBalance(sender,newBalance);
 
 
-		newBalance = the_bank.getBalance(reciever) + amount;
-		the_bank.setBalance(reciever,newBalance);
-
+bool makeTransfer(string sender,string reciever,int coin){
+	
+	//transfer
+	if(the_bank.takeCoin(sender,coin)){
+		the_bank.giveCoin(reciever,coin);
+			
+		//update ledger
+		string message = sender + " sent " + reciever + " coin\n";
+		messageLedger.putMessage(message);
 		return true;
 	}
 
