@@ -25,7 +25,7 @@ key::~key()
 		{
 			node *nextNode = curNode->next;
 			delete curNode;
-			curNode = nextNode;
+			curNode = nextNode->next;
 		}
 
 	}
@@ -112,7 +112,7 @@ key key::operator+(const key &other)
 		}
 	}
 
-	*this = sum;										// this step avoids a seg fault when trying to return the key made in the scope of the function
+	*this = sum;											// this step avoids a seg fault when trying to return the key made in the scope of the function
 	return *this;
 }
 
@@ -147,7 +147,7 @@ key key::operator*(const key &other)
 		product = product + needToAdd;
 	}
 
-	*this = product;									// this step avoids a seg fault when trying to return the key made in the scope of the function
+	*this = product;										// this step avoids a seg fault when trying to return the key made in the scope of the function
 	return *this;
 }
 
@@ -160,15 +160,28 @@ key key::operator-(const key &other)
 	node * p1 = this->head;
 	node * p2 = other.head;
 
+	if 
 
+	while (p1->next != nullptr)
+	{
+		p1 = p1->next;										// iterate through to tail of the list to start from highest digit
+	}
+	while (p2->next != nullptr)
+	{
+		p2 = p2->next;
+	}
+
+
+
+	*this = difference;
+	return *this;
 }
 
 int main()
 {
 	key key1, key2;
 
-	cout << "check1" << endl;
-	int x = 1, y = 2, z = 3;
+	int x = 1; int y = 2; //int z = 3;
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -176,13 +189,16 @@ int main()
 		key2.pushfront(y);
 	}
 
-	cout << "check2" << endl;
+	key1.print();
+	//key2.print();
+	/*
 	key key3 = key1 + key2;
 	key3.print();
 
 	cout << "check3" << endl;
 	key key4 = key1 * key2;
 	key4.print();
+	*/
 
 	cout << "complete" << endl;
 }
