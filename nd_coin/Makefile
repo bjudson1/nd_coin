@@ -5,6 +5,7 @@ MAIN = server
 EXEC = runit
 
 
+top: client runit
 
 
 
