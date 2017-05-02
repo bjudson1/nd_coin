@@ -9,8 +9,10 @@ top: client runit
 
 
 
-$(EXEC): $(CLASS1).o $(CLASS2).o $(MAIN).o
-	$(CMP) $(CLASS1).o $(CLASS2).o $(MAIN).o -o $(EXEC)
+$(EXEC): $(CLASS1).o $(CLASS2).o $(MAIN).o libcryptopp.a
+	$(CMP) -L. libcryptopp.a $(CLASS1).o $(CLASS2).o $(MAIN).o -o $(EXEC)
+
+libcryptopp.a:	
 
 client: client.o
 	$(CMP) -o client client.o 
