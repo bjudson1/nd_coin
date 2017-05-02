@@ -9,9 +9,24 @@
 #include <netdb.h>
 #include <stdio.h>
 
+#include "include/cryptopp/rsa.h"
+#include "include/cryptopp/cryptlib.h"
+#include "include/cryptopp/osrng.h"
+#include "include/cryptopp/base32.h"
+#include "include/cryptopp/files.h"
+#include "include/cryptopp/filters.h"
+#include "include/cryptopp/pssr.h"
+
 using namespace std;
 
+//----------------------------Prototype-----------------------------
+
+void create_keys();
 bool sendCoin(int, string, string, int);
+
+
+//----------------------------GLOBAL-----------------------------
+
 
 int main(int argc, char *argv[]){
 	int argind = 1;
@@ -23,8 +38,9 @@ int main(int argc, char *argv[]){
     char* ip = "127.0.0.1";
     string user,reciever;
     int coin;
-
     struct sockaddr_in server_addr;
+
+   
 
     //get port number
     if(argc > 1)
@@ -106,8 +122,32 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+void create_keys(){
+	
+
+
+	/*const CryptoPP::Integer& n = params.GetModulus();
+	const CryptoPP::Integer& p = params.GetPrime1();
+	const CryptoPP::Integer& q = params.GetPrime2();
+	const CryptoPP::Integer& d = params.GetPrivateExponent();
+	const CryptoPP::Integer& e = params.GetPublicExponent();
+
+
+	// Dump
+	cout << "RSA Parameters:" << endl;
+	cout << " n: " << n << endl;
+	cout << " p: " << p << endl;
+	cout << " q: " << q << endl;
+	cout << " d: " << d << endl;
+	cout << " e: " << e << endl;
+	cout << endl;*/
+}
+
+
 bool sendCoin(int client, string sender, string reciever, int coin){
-	string message =  "",coin_str = "";
+	
+
+	string message =  "",coin_str = "",signature;
 	int bufsize = 1024;
     char buffer[bufsize];
 
@@ -119,8 +159,81 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	message += to_string(coin);
 	message += "*";
 	
+
+	//create public and private key pair
+	CryptoPP::AutoSeededRandomPool rng;
+
+	CryptoPP::InvertibleRSAFunction params;
+	params.GenerateRandomWithKeySize(rng, 3072);
+
+	CryptoPP::RSA::PrivateKey privateKey(params);
+	CryptoPP::RSA::PublicKey publicKey(params);	
+
+
+	CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
+
+
+	cout<<"Message: "<<message<<endl;
+
+	CryptoPP::StringSource ss1(message, true, 
+	    new CryptoPP::SignerFilter(rng, signer,
+	        new CryptoPP::StringSink(signature)
+	   ) // SignerFilter
+	); // StringSource
+
+	message += signature;
+	message += "EOF";
+
+	cout<<"Message: "<<sizeof(signature.c_str())<<endl;
+
+
+
+/*
+	// Verify and Recover
+	CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
+
+	CryptoPP::StringSource ss2(message+signature, true,
+	    new CryptoPP::SignatureVerificationFilter(
+	        verifier, NULL,
+	        CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
+	   ) // SignatureVerificationFilter
+	); // StringSource
+
+	cout << "Verified signature on message" << endl;*/
+
+	
+	/*CryptoPP::RSASS<PSSR, SHA1>::Signer signer;
+	CryptoPP::RSASS<PSSR, SHA1>::Verifier verifier;
+*/
+
+
+
+
+	/*
+
+	//Encrypt Message
+	string signature;
+
+	////////////////////////////////////////////////
+	// Sign and Encode
+	CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(CryptoPP::RSA::PrivateKey);
+
+
+	new CryptoPP::SignerFilter(rng, signer);
+
+
+	CryptoPP::StringSource ss1(message, true, 
+	    new CryptoPP::SignerFilter(rng, signer,
+	        new CryptoPP::StringSink(signature),false
+	   ) // SignerFilter
+	); // StringSource
+*/
+
+
+
 	//send message to server
-	send(client,message.c_str(),sizeof(message),0);
+	//send(client,message.c_str(),sizeof(message),0);
+	send(client,signature.c_str(),sizeof(signature.c_str()),0);
 
 	//get return message from server
 	recv(client, buffer, bufsize, 0);

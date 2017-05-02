@@ -5,26 +5,30 @@ MAIN = server
 EXEC = runit
 
 
-top: client runit
+all: run_server run_client
+
+
+run_server: ledger.o bank.o server.o libcryptopp.a
+	$(CMP) -L. libcryptopp.a ledger.o bank.o server.o -o run_server
+
+ledger.o: ledger.cpp ledger.h
+	$(CMP) -c ledger.cpp -o ledger.o
+
+bank.o: bank.cpp bank.h
+	$(CMP) -c bank.cpp -o bank.o
+
+server.o: server.cpp bank.h ledger.h
+	$(CMP) -c server.cpp -o server.o
 
 
 
-$(EXEC): $(CLASS1).o $(CLASS2).o $(MAIN).o libcryptopp.a
-	$(CMP) -L. libcryptopp.a $(CLASS1).o $(CLASS2).o $(MAIN).o -o $(EXEC)
 
-libcryptopp.a:	
-
-client: client.o
-	$(CMP) -o client client.o 
+run_client: client.o libcryptopp.a
+	$(CMP) -L. libcryptopp.a client.o -o run_client
 
 client.o: client.cpp
 	$(CMP) -c -o client.o client.cpp 
 
-$(CLASS1).o: $(CLASS1).cpp $(CLASS1).h
-	$(CMP) -c $(CLASS1).cpp -o $(CLASS1).o
-
-$(CLASS2).o: $(CLASS2).cpp $(CLASS2).h
-	$(CMP) -c $(CLASS2).cpp -o $(CLASS2).o
 
 
 $(MAIN).o: $(MAIN).cpp $(CLASS1).h $(CLASS2).h 

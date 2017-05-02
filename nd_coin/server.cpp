@@ -1,11 +1,6 @@
 #include "ledger.h"
 #include "bank.h"
 
-// RSA Encryption
-#include <cryptopp/rsa.h>
-#include <cryptopp/osrng.h>
-#include <cryptopp/base64.h>
-#include <cryptopp/files.h>
 
 
 #include <iostream>
@@ -17,12 +12,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-//#include <curlpp-0.8.1/include/curlpp/cURLpp.hpp>
-//#include <curlpp-0.8.1/include/curlpp/Easy.hpp>
-//#include <curlpp-0.8.1/include/curlpp/Options.hpp>
+#include "include/cryptopp/rsa.h"
+#include "include/cryptopp/cryptlib.h"
+#include "include/cryptopp/osrng.h"
+#include "include/cryptopp/base32.h"
+#include "include/cryptopp/files.h"
+#include "include/cryptopp/filters.h"
+#include "include/cryptopp/pssr.h"
 
 using namespace std;
-using namespace CryptoPP;
 
 bool makeTransfer(string,string,int);
 void set_up_test();
@@ -36,7 +34,7 @@ struct coin{
 };
 
 int main(int argc, char *argv[]){
-	/*int client,server;
+	int client,server;
 	int argind = 1;
 	int portNum = 8000;
 	int bufsize=1024;
@@ -46,11 +44,10 @@ int main(int argc, char *argv[]){
 	struct sockaddr_in server_addr;
     socklen_t size;
 
-    the_bank.giveCoin("bob",10);
-
     //get port number
     if(argc > 1)
     	portNum =atoi(argv[argind++]);
+
 
     set_up_test();
 
@@ -97,11 +94,22 @@ int main(int argc, char *argv[]){
         cout << "\n=> Enter # to end the connection\n" << endl;
 
         do{
-        	string sender = "",reciever = "",coin = "";
+        	string sender = "",reciever = "",coin = "",signature ="";
         	int i=0;
+            string m;
 
+            //get original message from client
         	recv(server, buffer, bufsize, 0);
-        	
+     
+            int count = 0;
+            while(buffer[0] != 'E' && count < 10000){
+                cout<<buffer<<endl;
+                count++;
+            }
+
+
+
+
         	//parse message for type
         	char type = buffer[i++];
         	i++;
@@ -114,7 +122,7 @@ int main(int argc, char *argv[]){
         		//get balance
         		case '1':
         			cout<<"Getting Balance\n";
-        			cout<<buffer;
+        		
 
         			/*while(buffer[i] != ' '){
         				sender += buffer[i++];
@@ -129,7 +137,7 @@ int main(int argc, char *argv[]){
 
         		//transfer coin
         		case '2':
-        			cout<<"Transfer Request\n";
+        			cout<<"Transfer Request...\n";
 
 					while(buffer[i] != ' '){
         				sender += buffer[i++];
@@ -142,6 +150,29 @@ int main(int argc, char *argv[]){
         			while(buffer[i] != '*'){
         				coin += buffer[i++];
         			}
+
+                    i++;
+                    while(buffer[i] != 'E' && buffer[i+1] != 'O' && buffer[i+2] != 'F'){
+                         signature += buffer[i++];
+                    }
+
+                    cout<<buffer<<endl;
+
+                    cout<<"signature: "<<signature<<endl;
+/*
+                    // Verify and Recover
+                    CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
+
+                    CryptoPP::StringSource ss2(message+signature, true,
+                        new CryptoPP::SignatureVerificationFilter(
+                            verifier, NULL,
+                            CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
+                        ) // SignatureVerificationFilter
+                    ); // StringSource
+
+                    cout << "Verified signature on message" << endl;
+
+                    */
 
 					if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
         				message = "s";
@@ -171,28 +202,7 @@ int main(int argc, char *argv[]){
     }
 
     close(client);
-    return 0;*/
-
-    AutoSeededRandomPool rng;
-    InvertibleRSAFunction privkey;
-    privkey.Initialize(rng, 1024);
- 
-    // With the current version of Crypto++, MessageEnd() needs to be called
-    // explicitly because Base64Encoder doesn't flush its buffer on destruction.
-    Base64Encoder privkeysink(new FileSink("c:\\privkey.txt"));
-    privkey.DEREncode(privkeysink);
-    privkeysink.MessageEnd();
- 
-     // Suppose we want to store the public key separately,
-     // possibly because we will be sending the public key to a third party.
-     RSAFunction pubkey(privkey);
-     
-     Base64Encoder pubkeysink(new FileSink("c:\\pubkey.txt"));
-     pubkey.DEREncode(pubkeysink);
-     pubkeysink.MessageEnd();
-
-
-
+    return 0;
 }
 
 
