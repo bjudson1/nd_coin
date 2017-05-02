@@ -23,6 +23,7 @@ using namespace std;
 
 void create_keys();
 bool sendCoin(int, string, string, int);
+void usage();
 
 
 //----------------------------GLOBAL-----------------------------
@@ -31,7 +32,7 @@ bool sendCoin(int, string, string, int);
 int main(int argc, char *argv[]){
 	int argind = 1;
     int client;
-    int portNum = 8000; // NOTE that the port number is same for both client and server
+    int port = 8000; // NOTE that the port number is same for both client and server
     bool isExit = false;
     int bufsize = 1024;
     char buffer[bufsize];
@@ -40,16 +41,32 @@ int main(int argc, char *argv[]){
     int coin;
     struct sockaddr_in server_addr;
 
-   
+//---------------Parse Command Line-----------------------------
+    char *arg;
 
-    //get port number
-    if(argc > 1)
-    	portNum = atoi(argv[argind++]);
+    while(argind < argc){   
+        arg = argv[argind++];
 
+        if(strcmp(arg,"-h") == 0){
+            usage();
+            return 0;
+        }
+
+        else if(strcmp(arg,"-p") == 0){
+            port =atoi(argv[argind++]);
+        }
+
+        else {
+            usage();
+            return -1;
+        }
+    }
 
 	//Get User
 	cout<<"Username: ";
 	cin>>user;
+
+//---------------Setup Client and Connect-----------------------------
 
     //create socket
     if((client = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -60,17 +77,19 @@ int main(int argc, char *argv[]){
     cout<<"=> Socket client has been created..." << endl;
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(portNum);
+    server_addr.sin_port = htons(port);
 
 
     //connect
     if(connect(client,(struct sockaddr *)&server_addr, sizeof(server_addr)) == 0)
-        cout << "=> Connection to the server port number: " << portNum << endl;
+        cout << "=> Connection to the server port number: " << port << endl;
 
     cout << "=> Awaiting confirmation from the server..." << endl; //line 40
     recv(client, buffer, bufsize, 0);
     cout << "=> Connection confirmed, you are good to go...";
     cout << "\n\n=> Enter # to end the connection\n" << endl;
+
+//---------------Execute-----------------------------
 
     // Once it reaches here, the client can send a message first.
     do{
@@ -147,7 +166,7 @@ void create_keys(){
 bool sendCoin(int client, string sender, string reciever, int coin){
 	
 
-	string message =  "",coin_str = "",signature;
+	string message =  "",output = "",coin_str = "",signature;
 	int bufsize = 1024;
     char buffer[bufsize];
 
@@ -158,7 +177,6 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	message += " ";
 	message += to_string(coin);
 	message += "*";
-	
 
 	//create public and private key pair
 	CryptoPP::AutoSeededRandomPool rng;
@@ -169,11 +187,7 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	CryptoPP::RSA::PrivateKey privateKey(params);
 	CryptoPP::RSA::PublicKey publicKey(params);	
 
-
 	CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
-
-
-	cout<<"Message: "<<message<<endl;
 
 	CryptoPP::StringSource ss1(message, true, 
 	    new CryptoPP::SignerFilter(rng, signer,
@@ -182,58 +196,27 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	); // StringSource
 
 	message += signature;
-	message += "EOF";
+	//message += "EOFEOF";
 
-	cout<<"Message: "<<sizeof(signature.c_str())<<endl;
+	//cout<<"Message: "<<message<<endl<<endl;
+	//cout<<"Message C_str: "<<message.c_str()<<endl;
+
+	send(client,message.c_str(),message.size(),0);
+	cout<<"Message sent\n";
+
+	//get return message from server
+	recv(client, buffer, bufsize, 0);
 
 
-
-/*
-	// Verify and Recover
-	CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
-
-	CryptoPP::StringSource ss2(message+signature, true,
-	    new CryptoPP::SignatureVerificationFilter(
-	        verifier, NULL,
-	        CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
-	   ) // SignatureVerificationFilter
-	); // StringSource
-
-	cout << "Verified signature on message" << endl;*/
-
-	
-	/*CryptoPP::RSASS<PSSR, SHA1>::Signer signer;
-	CryptoPP::RSASS<PSSR, SHA1>::Verifier verifier;
-*/
+	//send public key
+	CryptoPP::ByteQueue queue;
+	privateKey.DEREncodePrivateKey(queue);
+	cout<<"size: "<<sizeof(queue)<<endl;
+	send(client,&queue,sizeof(queue),0);
 
 
 
 
-	/*
-
-	//Encrypt Message
-	string signature;
-
-	////////////////////////////////////////////////
-	// Sign and Encode
-	CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(CryptoPP::RSA::PrivateKey);
-
-
-	new CryptoPP::SignerFilter(rng, signer);
-
-
-	CryptoPP::StringSource ss1(message, true, 
-	    new CryptoPP::SignerFilter(rng, signer,
-	        new CryptoPP::StringSink(signature),false
-	   ) // SignerFilter
-	); // StringSource
-*/
-
-
-
-	//send message to server
-	//send(client,message.c_str(),sizeof(message),0);
-	send(client,signature.c_str(),sizeof(signature.c_str()),0);
 
 	//get return message from server
 	recv(client, buffer, bufsize, 0);
@@ -244,5 +227,9 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	return false;
 }
 
+void usage(){
+
+
+}
 
 

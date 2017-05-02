@@ -1,3 +1,7 @@
+//server.cpp
+//Brenden Judson
+//DJ Chao
+
 #include "ledger.h"
 #include "bank.h"
 
@@ -11,6 +15,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vector>
 
 #include "include/cryptopp/rsa.h"
 #include "include/cryptopp/cryptlib.h"
@@ -22,8 +27,15 @@
 
 using namespace std;
 
+//---------------Prototypes-----------------------------
+
 bool makeTransfer(string,string,int);
 void set_up_test();
+void usage();
+int socket_listen(int);
+
+//---------------Globals-----------------------------
+
 ledger messageLedger = ledger();
 
 
@@ -36,7 +48,7 @@ struct coin{
 int main(int argc, char *argv[]){
 	int client,server;
 	int argind = 1;
-	int portNum = 8000;
+	int port = 8000;
 	int bufsize=1024;
 	char buffer[bufsize];
 	bool isExit = false;
@@ -44,168 +56,150 @@ int main(int argc, char *argv[]){
 	struct sockaddr_in server_addr;
     socklen_t size;
 
-    //get port number
-    if(argc > 1)
-    	portNum =atoi(argv[argind++]);
+//---------------Parse Command Line-----------------------------
+    char *arg;
 
+    while(argind < argc){   
+        arg = argv[argind++];
 
-    set_up_test();
+        if(strcmp(arg,"-h") == 0){
+            usage();
+            return 0;
+        }
 
-    //create socket
-    if((client = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        cout << "\nError establishing socket..." << endl;
-        exit(1);
+        else if(strcmp(arg,"-p") == 0){
+            port =atoi(argv[argind++]);
+        }
+
+        else if(strcmp(arg,"-test") == 0){
+            set_up_test();
+        }
+
+        else {
+            usage();
+            return -1;
+        }
     }
 
-    cout<<"Socket server has been created on port "<<portNum<<endl;
+//---------------Set Up Server + Begin accepting-----------------------------
+    int clientCount = 1;
+    int i =0;
+    string message = "",sender ="",reciever="",coin="",signature="";
+    char type;
 
-    //set addr info
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htons(INADDR_ANY);
-    server_addr.sin_port = htons(portNum);
-
-    //bind socket
-    if((bind(client, (struct sockaddr*)&server_addr,sizeof(server_addr))) < 0){
-        cout << "=> Error binding connection, the socket has already been established..." << endl;
+    //listen on port
+    if((server = socket_listen(port)) < 0){
         return -1;
     }
-    size = sizeof(server_addr);
 
-    //listen
-    cout << "=> Looking for clients..." << endl;
-    listen(client, 1);
+    do{
+        //accept client
+        cout << "Looking for clients..." << endl;
+        client = accept(server,(struct sockaddr *)&server_addr,&size);
 
-
-    int clientCount = 1;
-    server = accept(client,(struct sockaddr *)&server_addr,&size);
-
-    // first check if it is valid or not
-    if (server < 0) 
-        cout << "=> Error on accepting..." << endl;
-
-    //while connection to client
-    while (server > 0){
+        // first check if it is valid or not
+        if (client < 0) 
+            cout << "=> Error on accepting..." << endl;
+            
+        //confirm conection
+        strcpy(buffer, "Server connected...\n");
+        send(client, buffer, bufsize, 0);
+        cout<<"Connected with the client #"<<clientCount<<endl;
         
-    	//confirm conection
-        strcpy(buffer, "=> Server connected...\n");
-        send(server, buffer, bufsize, 0);
-        
-        cout << "=> Connected with the client #" << clientCount << ", you are good to go..." << endl;
-        cout << "\n=> Enter # to end the connection\n" << endl;
+        //get original message from client
+        int length;
 
-        do{
-        	string sender = "",reciever = "",coin = "",signature ="";
-        	int i=0;
-            string m;
+        cout<<"Waiting for Message...\n";
 
-            //get original message from client
-        	recv(server, buffer, bufsize, 0);
+        length = recv(client, buffer, bufsize, 0);
      
-            int count = 0;
-            while(buffer[0] != 'E' && count < 10000){
-                cout<<buffer<<endl;
-                count++;
-            }
+        cout<<"Message Recieved\n";
+        message.append(buffer, buffer + length);
+
+        string output = "s";
+        send(client, output.c_str(), output.size(), 0);
+
+        //-------------Handle Message----------------------------------------
+        //get message type
+        type = message[i++];
+        i++;
+
+        switch(type){
+            case '1':      //get balance message
+                cout<<"Getting Balance\n";
+                
+
+                    //balance = the_bank.getBalance(sender);
+                    //message = to_string(balance);
+                    //cout<<message;
+                //  send(server, message.c_str(), sizeof(message), 0);
+            break;
+      
+            case '2':    //transfer coin
+                cout<<"Transfer Request...\n";
+
+                //parse message
+                while(buffer[i] != ' '){
+                    sender += buffer[i++];
+                }
+                i++;
+                while(buffer[i] != ' '){
+                    reciever += buffer[i++];
+                }
+                i++;
+                while(buffer[i] != '*'){
+                    coin += buffer[i++];
+                }
+                i++;
+
+                signature.append(buffer + i, buffer + length);
+
+                cout<<"yo\n";
+                CryptoPP::ByteQueue queue;
+                CryptoPP::RSA::PublicKey publicKey;
+                cout<<"size: "<<sizeof(queue)<<endl;
+
+                length = recv(client, &queue, sizeof(queue), 0);
+               
+                publicKey.BERDecodePublicKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
+
+                 cout<<"hi"<<endl;
 
 
+                //Verify and Recover
+                CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
+
+                CryptoPP::StringSource ss2(message, true,
+                    new CryptoPP::SignatureVerificationFilter(
+                        verifier, NULL,
+                        CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
+                    ) // SignatureVerificationFilter
+                ); // StringSource
+                cout << "Verified signature on message" << endl;
 
 
-        	//parse message for type
-        	char type = buffer[i++];
-        	i++;
+                if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
+                    message = "s";
+                    send(client, message.c_str(), message.size(), 0);
+                }
 
-        	int balance;
-        	string message;
+                else{
+                    message = "f";
+                    send(client, message.c_str(), message.size(), 0);
+                }
+            break;
+        };
+        
+        //-----------CLOSE ClIENT CONNECTION---------------------------------------
 
-        	//decide what to do
-        	switch(type){
-        		//get balance
-        		case '1':
-        			cout<<"Getting Balance\n";
-        		
-
-        			/*while(buffer[i] != ' '){
-        				sender += buffer[i++];
-        			}*/
-        			cout<<"F";
-
-        			//balance = the_bank.getBalance(sender);
-        			//message = to_string(balance);
-        			//cout<<message;
-        		//	send(server, message.c_str(), sizeof(message), 0);
-        		break;
-
-        		//transfer coin
-        		case '2':
-        			cout<<"Transfer Request...\n";
-
-					while(buffer[i] != ' '){
-        				sender += buffer[i++];
-        			}
-        			i++;
-        			while(buffer[i] != ' '){
-        				reciever += buffer[i++];
-        			}
-        			i++;
-        			while(buffer[i] != '*'){
-        				coin += buffer[i++];
-        			}
-
-                    i++;
-                    while(buffer[i] != 'E' && buffer[i+1] != 'O' && buffer[i+2] != 'F'){
-                         signature += buffer[i++];
-                    }
-
-                    cout<<buffer<<endl;
-
-                    cout<<"signature: "<<signature<<endl;
-/*
-                    // Verify and Recover
-                    CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
-
-                    CryptoPP::StringSource ss2(message+signature, true,
-                        new CryptoPP::SignatureVerificationFilter(
-                            verifier, NULL,
-                            CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
-                        ) // SignatureVerificationFilter
-                    ); // StringSource
-
-                    cout << "Verified signature on message" << endl;
-
-                    */
-
-					if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
-        				message = "s";
-
-        				send(server, message.c_str(), sizeof(message), 0);
-
-        				isExit = true;
-        			}
-
-        			else{
-        				message = "f";
-
-        				send(server, message.c_str(), sizeof(message), 0);
-        			}
-        		break;
-        	};
-        }while(!isExit);
-   
-
-	//close
-        // inet_ntoa converts packet data to IP, which was taken from client
-        cout << "\n\n=> Connection terminated with IP " << inet_ntoa(server_addr.sin_addr);
-        close(server);
-        cout << "\nGoodbye..." << endl;
-        isExit = false;
-        exit(1);
-    }
-
-    close(client);
+        cout<<"\nConnection terminated with Client IP: "<<inet_ntoa(server_addr.sin_addr)<<endl;
+        close(client);
+    }while(!isExit);
+    
+//-----------CLOSE SERVER---------------------------------------
+    close(server);
     return 0;
 }
-
-
 
 bool makeTransfer(string sender,string reciever,int coin){
 	//transfer
@@ -230,4 +224,38 @@ void set_up_test(){
 		the_bank.giveCoin("dchao",j);
 
 	cout<<"f";
+}
+
+int socket_listen(int port){
+    int server;
+    struct sockaddr_in server_addr;
+
+    //create socket
+    if((server = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        cout << "\nError establishing socket..." << endl;
+        return -1;
+    }
+
+    //set addr info
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htons(INADDR_ANY);
+    server_addr.sin_port = htons(port);
+
+    //bind socket
+    if((bind(server, (struct sockaddr*)&server_addr,sizeof(server_addr))) < 0){
+        cout << "Error binding connection, the socket has already been established..." << endl;
+        return -1;
+    }
+    //size = sizeof(server_addr);
+
+    cout<<"Socket server has been created on port "<<port<<endl;
+    
+    //listen
+    listen(server, 1);
+
+    return server;
+}
+
+void usage(){
+    cout<<"USAGE: ./server.cpp [FLAGS]\n";
 }
