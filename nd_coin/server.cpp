@@ -19,6 +19,7 @@
 using namespace std;
 
 bool makeTransfer(string,string,int);
+void set_up_test();
 ledger messageLedger = ledger();
 
 
@@ -44,6 +45,8 @@ int main(int argc, char *argv[]){
     //get port number
     if(argc > 1)
     	portNum =atoi(argv[argind++]);
+
+    set_up_test();
 
     //create socket
     if((client = socket(AF_INET, SOCK_STREAM, 0)) < 0){
@@ -105,16 +108,17 @@ int main(int argc, char *argv[]){
         		//get balance
         		case '1':
         			cout<<"Getting Balance\n";
+        			cout<<buffer;
 
-        			while(buffer[i] != ' '){
+        			/*while(buffer[i] != ' '){
         				sender += buffer[i++];
-        			}
-        			i++;
+        			}*/
+        			cout<<"F";
 
-        			balance = the_bank.getBalance(sender);
-        			message = to_string(balance);
-
-        			send(server, message.c_str(), sizeof(message), 0);
+        			//balance = the_bank.getBalance(sender);
+        			//message = to_string(balance);
+        			//cout<<message;
+        		//	send(server, message.c_str(), sizeof(message), 0);
         		break;
 
         		//transfer coin
@@ -178,4 +182,15 @@ bool makeTransfer(string sender,string reciever,int coin){
 	}
 
 	return false;
+}
+
+
+void set_up_test(){
+	for(int i=0;i<100;i++)
+		the_bank.giveCoin("bjudson1",i);
+
+	for(int j=101;j<200;j++)
+		the_bank.giveCoin("dchao",j);
+
+	cout<<"f";
 }
