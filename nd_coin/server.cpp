@@ -1,6 +1,11 @@
 #include "ledger.h"
 #include "bank.h"
 
+// RSA Encryption
+#include <cryptopp/rsa.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/files.h>
 
 
 #include <iostream>
@@ -17,6 +22,7 @@
 //#include <curlpp-0.8.1/include/curlpp/Options.hpp>
 
 using namespace std;
+using namespace CryptoPP;
 
 bool makeTransfer(string,string,int);
 ledger messageLedger = ledger();
@@ -29,7 +35,7 @@ struct coin{
 };
 
 int main(int argc, char *argv[]){
-	int client,server;
+	/*int client,server;
 	int argind = 1;
 	int portNum = 8000;
 	int bufsize=1024;
@@ -161,7 +167,28 @@ int main(int argc, char *argv[]){
     }
 
     close(client);
-    return 0;
+    return 0;*/
+
+    AutoSeededRandomPool rng;
+    InvertibleRSAFunction privkey;
+    privkey.Initialize(rng, 1024);
+ 
+    // With the current version of Crypto++, MessageEnd() needs to be called
+    // explicitly because Base64Encoder doesn't flush its buffer on destruction.
+    Base64Encoder privkeysink(new FileSink("c:\\privkey.txt"));
+    privkey.DEREncode(privkeysink);
+    privkeysink.MessageEnd();
+ 
+     // Suppose we want to store the public key separately,
+     // possibly because we will be sending the public key to a third party.
+     RSAFunction pubkey(privkey);
+     
+     Base64Encoder pubkeysink(new FileSink("c:\\pubkey.txt"));
+     pubkey.DEREncode(pubkeysink);
+     pubkeysink.MessageEnd();
+
+
+
 }
 
 
