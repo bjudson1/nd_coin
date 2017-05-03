@@ -9,8 +9,9 @@ void ledger::putMessage(string incoming_message){
 }
 
 void ledger::makeTransfer(int serial_num){
-
+	//messages.push(incoming_message);
 }
+
 
 stack<string> ledger::getMessages(){
 	return messages;

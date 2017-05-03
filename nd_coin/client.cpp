@@ -1,3 +1,9 @@
+//Brenden Judson
+//DJ Chao
+//client.cpp
+
+#include "ledger.h"
+
 #include <iostream>
 #include <string.h>
 #include <sys/types.h>
@@ -8,6 +14,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <fstream>
 
 #include "include/cryptopp/rsa.h"
 #include "include/cryptopp/cryptlib.h"
@@ -28,6 +35,7 @@ void usage();
 
 //----------------------------GLOBAL-----------------------------
 
+//ledger messageLedger = ledger();
 
 int main(int argc, char *argv[]){
 	int argind = 1;
@@ -209,13 +217,24 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 
 
 	//send public key
-	CryptoPP::ByteQueue queue;
+	CryptoPP::ByteQueue queue = CryptoPP::ByteQueue::ByteQueue(0);
 	privateKey.DEREncodePrivateKey(queue);
+    //publicKey.Save(queue);
+	string filename = "yo.txt";
+
+   /* ofstream myfile;
+	myfile.open ("yo.txt");
+	myfile << queue;
+	myfile.close();
+*/
+	CryptoPP::FileSink file(filename.c_str());
+
+    queue.CopyTo(file);
+    file.MessageEnd();
+
+
 	cout<<"size: "<<sizeof(queue)<<endl;
 	send(client,&queue,sizeof(queue),0);
-
-
-
 
 
 	//get return message from server

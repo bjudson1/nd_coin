@@ -155,15 +155,22 @@ int main(int argc, char *argv[]){
                 signature.append(buffer + i, buffer + length);
 
                 cout<<"yo\n";
-                CryptoPP::ByteQueue queue;
+                CryptoPP::ByteQueue queue = CryptoPP::ByteQueue::ByteQueue(0);
                 CryptoPP::RSA::PublicKey publicKey;
                 cout<<"size: "<<sizeof(queue)<<endl;
 
                 length = recv(client, &queue, sizeof(queue), 0);
-               
+
+                string filename = "hey.txt";
+
+                CryptoPP::FileSink file(filename.c_str());
+
+                queue.CopyTo(file);
+                file.MessageEnd();
+
                 publicKey.BERDecodePublicKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
 
-                 cout<<"hi"<<endl;
+                cout<<"hi"<<endl;
 
 
                 //Verify and Recover
