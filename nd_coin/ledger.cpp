@@ -6,10 +6,11 @@ ledger::ledger(){
 
 void ledger::putMessage(string incoming_message){
 	messages.push(incoming_message);
+	count++;
 }
 
 void ledger::makeTransfer(int serial_num){
-
+	
 }
 
 stack<string> ledger::getMessages(){
@@ -18,7 +19,7 @@ stack<string> ledger::getMessages(){
 
 
 int ledger::getSize(){
-	return(messages.size());
+	return count;
 }
 
 void ledger::print(){
