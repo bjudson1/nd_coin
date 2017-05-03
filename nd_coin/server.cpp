@@ -105,9 +105,11 @@ int main(int argc, char *argv[]){
         strcpy(buffer, "Server connected...\n");
         send(client, buffer, bufsize, 0);
         cout<<"Connected with the client #"<<clientCount<<endl;
+        cout << "this is client " << client << endl;
         
         //get original message from client
         int length;
+        int balance;                        // used in balance requesting
 
         cout<<"Waiting for Message...\n";
 
@@ -127,12 +129,16 @@ int main(int argc, char *argv[]){
         switch(type){
             case '1':      //get balance message
                 cout<<"Getting Balance\n";
-                
+                    //parse message
+                    while(buffer[i] != ' '){
+                        sender += buffer[i++];
+                    }
+                    i++;
 
-                    //balance = the_bank.getBalance(sender);
-                    //message = to_string(balance);
-                    //cout<<message;
-                //  send(server, message.c_str(), sizeof(message), 0);
+                    balance = the_bank.getBalance(sender);
+                    message = to_string(balance);
+                    cout << message << endl;
+                    send(server, message.c_str(), sizeof(message), 0);
             break;
       
             case '2':    //transfer coin
@@ -229,8 +235,6 @@ void set_up_test(){
 
 	for(int j=101;j<200;j++)
 		the_bank.giveCoin("dchao",j);
-
-	cout<<"f";
 }
 
 int socket_listen(int port){
@@ -266,3 +270,4 @@ int socket_listen(int port){
 void usage(){
     cout<<"USAGE: ./server.cpp [FLAGS]\n";
 }
+
