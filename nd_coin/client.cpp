@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
 
     	switch(choice){
     		case 1:
-    			cout<<"Requesting Blance...\n";
+    			cout<<"Requesting Balance...\n";
 
     			message = "1 ";
     			message += user;
