@@ -1,0 +1,39 @@
+------------User Manual: ND Coin------------
+This program is fairly straightforward to run: to compile, simply run the make command at the terminal command line.  
+From here, you will want to have a dedicated window for the server.  For testing purposes, change the set_up_test() function:
+
+void set_up_test(){
+	for(int i=0;i<100;i++)
+		the_bank.giveCoin("bjudson1",i);
+
+	for(int j=101;j<200;j++)
+		the_bank.giveCoin("dchao",j);
+}
+
+in the server.cpp file to have a beginning user and balance size for as many test users as you wish.  
+Then, in the server terminal, run the command:
+
+./run_server –test
+
+this will initialize the server with the testing users and their subsequent balances.
+From another terminal window, run the command:
+
+./run_client
+
+this will initialize a new client interface (similar to when you swipe youre debit card at an ATM).  
+This will give you a series of options to perform the subsequent tasks associated: 
+
+------MENU------
+1:	Get Balance
+2:	Send Coin
+3:	Quit
+
+After each individual “transaction” the client will log off, so in order to perform multiple transactions 
+the user will need to log back, similar to at ATMs (what we modeled it after).  This system is purposefully succint
+and simple in terms of it's use, and much of the work is done "undercover" so that the lay man is not able to 
+steal and or create money out of thin air (providing they are not testing, and providing a dedicated server is created
+in the near future).
+
+Thanks, happy coining and go Irish!
+
+-DJ and Brenden
