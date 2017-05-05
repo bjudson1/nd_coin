@@ -30,7 +30,7 @@ using namespace std;
 //---------------Prototypes-----------------------------
 
 bool makeTransfer(string,string,int);
-void set_up_test();
+void set_up_test(string);
 void usage();
 int socket_listen(int);
 
@@ -52,6 +52,7 @@ int main(int argc, char *argv[]){
 	int bufsize=1024;
 	char buffer[bufsize];
 	bool isExit = false;
+    bool test = false;
 
 	struct sockaddr_in server_addr;
     socklen_t size;
@@ -72,7 +73,7 @@ int main(int argc, char *argv[]){
         }
 
         else if(strcmp(arg,"-test") == 0){
-            set_up_test();
+            set_up_test(argv[argind++]);
         }
 
         else {
@@ -119,6 +120,7 @@ int main(int argc, char *argv[]){
         string output = "s";
         send(client, output.c_str(), output.size(), 0);
 
+       
         //-------------Handle Message----------------------------------------
         //get message type
         type = message[i++];
@@ -126,22 +128,34 @@ int main(int argc, char *argv[]){
         int balance;            // used if balance transaction is chosen
 
         switch(type){
-            case '1':      //get balance message
-                cout<<"Getting Balance...\n";
+            case '1':    
+                    
+                    length = recv(client, buffer, bufsize, 0);
+                
                     //parse message
-                    while(buffer[i] != ' '){
+                    while(i < length){
                         sender += buffer[i++];
                     }
                     i++;
 
+
+                    cout<<"Getting Balance for "<<sender<<"...\n";
+
                     balance = the_bank.getBalance(sender);
                     message = to_string(balance);
-                    cout << message << endl;
-                    send(server, message.c_str(), sizeof(message), 0);
+
+                    send(client, message.c_str(), message.size(), 0);
+
+                  /*  buffer[0] = 'E';
+                    buffer[1] = 'O';
+                    buffer[2] = 'F';
+                    send(client,buffer,3,0);*/
             break;
       
             case '2':    //transfer coin
                 cout<<"Transfer Request...\n";
+
+             
 
                 //parse message
                 while(buffer[i] != ' '){
@@ -231,13 +245,13 @@ int main(int argc, char *argv[]){
                     cout<<"Verified signature on message"<<endl;
 
                     if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
-                        cout<<"Transfer accpeted\n";
+                        cout<<sender<<"->"<<reciever<<"\t"<<"Transfer accepted\n";
                         message = "s";
                         send(client, message.c_str(), message.size(), 0);
                     }
 
                     else{
-                        cout<<"Transfer denied\n";
+                        cout<<sender<<"->"<<reciever<<"\t"<<"Transfer denied\n";
                         message = "f";
                         send(client, message.c_str(), message.size(), 0);
                     }
@@ -271,15 +285,15 @@ bool makeTransfer(string sender,string reciever,int coin){
 }
 
 
-void set_up_test(){
+void set_up_test(string name){
 	for(int i=0;i<100;i++)
-		the_bank.giveCoin("bjudson1",i);
+		the_bank.giveCoin(name,i);
 
-	for(int j=101;j<200;j++)
+	for(int j=100;j<200;j++)
 		the_bank.giveCoin("dchao",j);
 
 	cout<<"TEST\n";
-    cout<<"bjudson: 100 coins\n";
+    cout<<"bjudson1: 100 coins\n";
     cout<<"dchao: 100 coins\n";
 }
 
