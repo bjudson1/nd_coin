@@ -155,6 +155,8 @@ int main(int argc, char *argv[]){
     		break;
 
     		case 3:
+                message = "3 ";
+                send(client,message.c_str(),sizeof(message),0);
     			isExit = true;
     		break;
     	}
@@ -233,10 +235,12 @@ bool sendCoin(int client, string sender, string reciever, int coin,CryptoPP::RSA
     cout<<"Sent Public Key\n";
 
 	//get return message from server
-	recv(client, buffer, bufsize, 0);
+	length = recv(client, buffer, bufsize, 0);
+    message = "";
+    for(int i=0;i<length;i++)  
+        message+=buffer[i];
 
-
-	if(strcmp(buffer,"s") == 0)
+	if(strcmp(message.c_str(),"s") == 0)
 		return true;
 
 	return false;

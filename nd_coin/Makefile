@@ -2,8 +2,6 @@ CMP = g++
 CLASS1 = ledger
 CLASS2 = bank
 MAIN = server
-EXEC = runit
-
 
 all: run_server run_client
 
@@ -31,9 +29,7 @@ client.o: client.cpp
 
 
 
-$(MAIN).o: $(MAIN).cpp $(CLASS1).h $(CLASS2).h 
-	$(CMP) -c $(MAIN).cpp -o $(MAIN).o
-
 clean:
 	rm *.o
-	rm $(EXEC)
+	rm run_server
+	rm run_client

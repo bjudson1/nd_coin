@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class bank{
 		bool takeCoin(string,int);
 		void setBalance(string,int);
 		int getBalance(string);
-		void makeCoin();
+		int takeCoin(string);
 	private:	
 		map<string,account> accounts;
 		vector<int> coins;
