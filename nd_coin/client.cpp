@@ -29,11 +29,12 @@ using namespace std;
 //----------------------------Prototype-----------------------------
 
 void create_keys();
-bool sendCoin(int, string, string, int);
+bool sendCoin(int, string, string, int,CryptoPP::RSA::PrivateKey,CryptoPP::RSA::PublicKey);
 void usage();
 
 
 //----------------------------GLOBAL-----------------------------
+CryptoPP::AutoSeededRandomPool rng;
 
 //ledger messageLedger = ledger();
 
@@ -73,6 +74,13 @@ int main(int argc, char *argv[]){
 	//Get User
 	cout<<"Username: ";
 	cin>>user;
+//----------------------Create Key Pair--------------------------------------------
+    CryptoPP::InvertibleRSAFunction params;
+    params.GenerateRandomWithKeySize(rng, 3072);
+
+    CryptoPP::RSA::PrivateKey privateKey(params);
+    
+    CryptoPP::RSA::PublicKey publicKey(params); 
 
 //---------------Setup Client and Connect-----------------------------
 
@@ -112,7 +120,7 @@ int main(int argc, char *argv[]){
 
     	switch(choice){
     		case 1:
-    			cout<<"Requesting Balance...\n";
+    			cout<<"Requesting Blance...\n";
 
     			message = "1 ";
     			message += user;
@@ -130,7 +138,7 @@ int main(int argc, char *argv[]){
     			cout<<"Who would you like to send to?";
     			cin>>reciever;
 
-    			if(sendCoin(client,user,reciever,coin))
+    			if(sendCoin(client,user,reciever,coin,privateKey,publicKey))
     				cout<<"Coins successfully sent\n";
     			else
     				cout<<"Coins failed to send\n";
@@ -171,7 +179,7 @@ void create_keys(){
 }
 
 
-bool sendCoin(int client, string sender, string reciever, int coin){
+bool sendCoin(int client, string sender, string reciever, int coin,CryptoPP::RSA::PrivateKey privateKey,CryptoPP::RSA::PublicKey publicKey){
 	
 
 	string message =  "",output = "",coin_str = "",signature;
@@ -186,14 +194,7 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	message += to_string(coin);
 	message += "*";
 
-	//create public and private key pair
-	CryptoPP::AutoSeededRandomPool rng;
-
-	CryptoPP::InvertibleRSAFunction params;
-	params.GenerateRandomWithKeySize(rng, 3072);
-
-	CryptoPP::RSA::PrivateKey privateKey(params);
-	CryptoPP::RSA::PublicKey publicKey(params);	
+	
 
 	CryptoPP::RSASSA_PKCS1v15_SHA_Signer signer(privateKey);
 
@@ -203,42 +204,49 @@ bool sendCoin(int client, string sender, string reciever, int coin){
 	   ) // SignerFilter
 	); // StringSource
 
+    //send message with sig
 	message += signature;
-	//message += "EOFEOF";
-
-	//cout<<"Message: "<<message<<endl<<endl;
-	//cout<<"Message C_str: "<<message.c_str()<<endl;
-
 	send(client,message.c_str(),message.size(),0);
 	cout<<"Message sent\n";
 
 	//get return message from server
 	recv(client, buffer, bufsize, 0);
+    cout<<"Message Recieved\n";
+
+	//save pub key to byte queu
+	CryptoPP::ByteQueue queue;
+    publicKey.Save(queue);	
 
 
-	//send public key
-	CryptoPP::ByteQueue queue = CryptoPP::ByteQueue::ByteQueue(0);
-	privateKey.DEREncodePrivateKey(queue);
-    //publicKey.Save(queue);
-	string filename = "yo.txt";
-
-   /* ofstream myfile;
-	myfile.open ("yo.txt");
-	myfile << queue;
-	myfile.close();
-*/
-	CryptoPP::FileSink file(filename.c_str());
-
+    /*string filename = "yo.bin";
+    CryptoPP::FileSink file(filename.c_str());
     queue.CopyTo(file);
-    file.MessageEnd();
+    file.MessageEnd();*/
 
+    //send public key
+    byte buf[1024];
+    fill(buf, buf +1024, 0);
+    
+    size_t bytes = queue.Get(buf,1024);
+    int length = 1;
 
-	cout<<"size: "<<sizeof(queue)<<endl;
-	send(client,&queue,sizeof(queue),0);
+    while(bytes > 0){
+        length = send(client,buf,bytes,0);
+        cout<<"Sending Public Key...\tbytes: "<<bytes<<endl;
+        bytes = queue.Get(buf,1024);
+    }
 
+    //send end message
+    fill(buffer, buffer +1024, 0);
+    buffer[0] = 'E';
+    buffer[1] = 'O';
+    buffer[2] = 'F';
+    send(client,buffer,1024,0);
+    cout<<"Sent Public Key\n";
 
 	//get return message from server
 	recv(client, buffer, bufsize, 0);
+
 
 	if(strcmp(buffer,"s") == 0)
 		return true;

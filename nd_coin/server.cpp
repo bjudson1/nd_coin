@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
         //confirm conection
         strcpy(buffer, "Server connected...\n");
         send(client, buffer, bufsize, 0);
-        cout<<"Connected with the client #"<<clientCount<<endl;
+        cout<<"Connected with the client"<<clientCount<<endl;
         
         //get original message from client
         int length;
@@ -152,47 +152,90 @@ int main(int argc, char *argv[]){
                 }
                 i++;
 
-                signature.append(buffer + i, buffer + length);
+                signature.append(buffer + i, buffer + length); 
+               
 
-                cout<<"yo\n";
-                CryptoPP::ByteQueue queue = CryptoPP::ByteQueue::ByteQueue(0);
+                byte buf[1024];
+                fill(buf, buf + 1024, 0);
+                CryptoPP::ByteQueue ByteQueue(0);
+
+                //get first packet
+                length = recv(client, buf, 1024, 0);
+                cout<<"Recieving PublicKey...\tbytes: "<<length<<endl;
+                
+
+                int end=0;
+                bool over = false;
+
+                if((char)buf[0] == 'E' && (char)buf[1] == 'O' && (char)buf[2] == 'F')
+                    cout<<"Nothing Recieved\n";
+
+                while(end < 1024){
+                        if(buf[end] == 'E' && buf[end+1] == 'O' && buf[end+2] == 'F'){
+                            over = true;
+                            break;
+                        }
+                        end++;
+                }
+
+                ByteQueue.Put2((byte *)buf, end, 0, false); 
+
+                while(!over){
+                    cout<<"Recieving PublicKey...\tbytyes: "<<length<<endl;
+                    fill(buf, buf + 1024, 0);
+                    length = recv(client, buf, 1024, 0);
+
+                    end=0;
+                    while(end < 1024){
+                        if(buf[end] == 'E' && buf[end+1] == 'O' && buf[end+2] == 'F'){
+                            over = true;
+                            break;
+                        }
+                        end++;
+                    }
+
+                    ByteQueue.Put2((byte *)buf, end, 0, false); 
+
+                    if(over)
+                        break;
+                }
+                cout<<"Recieved Public Key\n";
+
+ 
+                //load pub key from byte queue
                 CryptoPP::RSA::PublicKey publicKey;
-                cout<<"size: "<<sizeof(queue)<<endl;
-
-                length = recv(client, &queue, sizeof(queue), 0);
-
-                string filename = "hey.txt";
-
-                CryptoPP::FileSink file(filename.c_str());
-
-                queue.CopyTo(file);
-                file.MessageEnd();
-
-                publicKey.BERDecodePublicKey(queue, false /*paramsPresent*/, queue.MaxRetrievable());
-
-                cout<<"hi"<<endl;
-
+                publicKey.Load(ByteQueue); 
 
                 //Verify and Recover
+                bool result = false;
                 CryptoPP::RSASSA_PKCS1v15_SHA_Verifier verifier(publicKey);
-
                 CryptoPP::StringSource ss2(message, true,
                     new CryptoPP::SignatureVerificationFilter(
-                        verifier, NULL,
-                        CryptoPP::SignatureVerificationFilter::THROW_EXCEPTION
-                    ) // SignatureVerificationFilter
+                        verifier, 
+                        new CryptoPP::ArraySink(
+                            (byte*)&result, sizeof(result)),
+                            CryptoPP::SignatureVerificationFilter::PUT_RESULT | CryptoPP::SignatureVerificationFilter::SIGNATURE_AT_END
+                    )
                 ); // StringSource
-                cout << "Verified signature on message" << endl;
-
-
-                if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
-                    message = "s";
-                    send(client, message.c_str(), message.size(), 0);
+                
+                if(true != result){
+                    cout<<"Failed to Verify signature on message"<<endl;
                 }
 
                 else{
-                    message = "f";
-                    send(client, message.c_str(), message.size(), 0);
+                    cout<<"Verified signature on message"<<endl;
+
+                    if(makeTransfer(sender,reciever,atoi(coin.c_str()))){
+                        cout<<"Transfer accpeted\n";
+                        message = "s";
+                        send(client, message.c_str(), message.size(), 0);
+                    }
+
+                    else{
+                        cout<<"Transfer denied\n";
+                        message = "f";
+                        send(client, message.c_str(), message.size(), 0);
+                    }
                 }
             break;
         };
@@ -230,7 +273,9 @@ void set_up_test(){
 	for(int j=101;j<200;j++)
 		the_bank.giveCoin("dchao",j);
 
-	cout<<"f";
+	cout<<"TEST\n";
+    cout<<"bjudson: 100 coins\n";
+    cout<<"dchao: 100 coins\n";
 }
 
 int socket_listen(int port){
