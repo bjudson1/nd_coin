@@ -315,4 +315,9 @@ int socket_listen(int port){
 
 void usage(){
     cout<<"USAGE: ./server.cpp [FLAGS]\n";
+    cout << "-test:    initialize a testing server in which the acounts set up in set_up_test()" << endl;
+    cout << "are given the specified amount of coins, for (hence) testing purposes of the server" << endl;
+    cout << endl;
+    cout << "-p:        specifies the port which the server will run on on the given machine" << endl;
+    cout << endl;
 }
