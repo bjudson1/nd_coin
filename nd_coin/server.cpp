@@ -243,12 +243,13 @@ int main(int argc, char *argv[]){
                     }
                 }
             break;
-        };
-        
-        //-----------CLOSE ClIENT CONNECTION---------------------------------------
 
-        cout<<"\nConnection terminated with Client IP: "<<inet_ntoa(server_addr.sin_addr)<<endl;
-        close(client);
+            case '3':
+                //-----------CLOSE ClIENT CONNECTION---------------------------------------
+                cout<<"\nConnection terminated with Client IP: "<<inet_ntoa(server_addr.sin_addr)<<endl;
+                close(client);
+            break;
+        };
     }while(!isExit);
     
 //-----------CLOSE SERVER---------------------------------------
