@@ -132,10 +132,10 @@ int main(int argc, char *argv[]){
     		break;
 
     		case 2:
-    			cout<<"How many coins would you like to send?";
+    			cout<<"How many coins would you like to send? ";
     			cin>>coin;
 
-    			cout<<"Who would you like to send to?";
+    			cout<<"Who would you like to send to? ";
     			cin>>reciever;
 
     			if(sendCoin(client,user,reciever,coin,privateKey,publicKey))
