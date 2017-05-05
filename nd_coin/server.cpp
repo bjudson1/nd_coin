@@ -123,16 +123,21 @@ int main(int argc, char *argv[]){
         //get message type
         type = message[i++];
         i++;
+        int balance;            // used if balance transaction is chosen
 
         switch(type){
             case '1':      //get balance message
-                cout<<"Getting Balance\n";
-                
+                cout<<"Getting Balance...\n";
+                    //parse message
+                    while(buffer[i] != ' '){
+                        sender += buffer[i++];
+                    }
+                    i++;
 
-                    //balance = the_bank.getBalance(sender);
-                    //message = to_string(balance);
-                    //cout<<message;
-                //  send(server, message.c_str(), sizeof(message), 0);
+                    balance = the_bank.getBalance(sender);
+                    message = to_string(balance);
+                    cout << message << endl;
+                    send(server, message.c_str(), sizeof(message), 0);
             break;
       
             case '2':    //transfer coin
