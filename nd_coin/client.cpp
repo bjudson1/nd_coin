@@ -49,6 +49,7 @@ int main(int argc, char *argv[]){
     string user,reciever;
     int coin;
     struct sockaddr_in server_addr;
+    int length;
 
 //---------------Parse Command Line-----------------------------
     char *arg;
@@ -126,9 +127,18 @@ int main(int argc, char *argv[]){
     			message += user;
 
     			send(client,message.c_str(),sizeof(message),0);
+                cout<<"Message sent\n";
 
-    			recv(client, buffer, bufsize, 0);
-    			cout<<"Balance: "<<buffer<<endl;
+                //get response
+    			length = recv(client, buffer, bufsize, 0);
+                send(client,message.c_str(),sizeof(message),0);
+                length = recv(client, buffer, bufsize, 0);
+                cout<<"Message recieved\n";
+                
+                cout<<"Balance: ";
+                for(int i=0 ;i< length;i++)
+                    cout<<buffer[i];
+                cout<<endl;
     		break;
 
     		case 2:
@@ -157,31 +167,9 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
-void create_keys(){
-	
-
-
-	/*const CryptoPP::Integer& n = params.GetModulus();
-	const CryptoPP::Integer& p = params.GetPrime1();
-	const CryptoPP::Integer& q = params.GetPrime2();
-	const CryptoPP::Integer& d = params.GetPrivateExponent();
-	const CryptoPP::Integer& e = params.GetPublicExponent();
-
-
-	// Dump
-	cout << "RSA Parameters:" << endl;
-	cout << " n: " << n << endl;
-	cout << " p: " << p << endl;
-	cout << " q: " << q << endl;
-	cout << " d: " << d << endl;
-	cout << " e: " << e << endl;
-	cout << endl;*/
-}
 
 
 bool sendCoin(int client, string sender, string reciever, int coin,CryptoPP::RSA::PrivateKey privateKey,CryptoPP::RSA::PublicKey publicKey){
-	
-
 	string message =  "",output = "",coin_str = "",signature;
 	int bufsize = 1024;
     char buffer[bufsize];
