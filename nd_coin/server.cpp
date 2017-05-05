@@ -257,12 +257,13 @@ int main(int argc, char *argv[]){
                     }
                 }
             break;
-        };
-        
-        //-----------CLOSE ClIENT CONNECTION---------------------------------------
 
-        cout<<"\nConnection terminated with Client IP: "<<inet_ntoa(server_addr.sin_addr)<<endl;
-        close(client);
+            case '3':
+                //-----------CLOSE ClIENT CONNECTION---------------------------------------
+                cout<<"\nConnection terminated with Client IP: "<<inet_ntoa(server_addr.sin_addr)<<endl;
+                close(client);
+            break;
+        };
     }while(!isExit);
     
 //-----------CLOSE SERVER---------------------------------------
@@ -329,4 +330,9 @@ int socket_listen(int port){
 
 void usage(){
     cout<<"USAGE: ./server.cpp [FLAGS]\n";
+    cout << "-test:    initialize a testing server in which the acounts set up in set_up_test()" << endl;
+    cout << "are given the specified amount of coins, for (hence) testing purposes of the server" << endl;
+    cout << endl;
+    cout << "-p:        specifies the port which the server will run on on the given machine" << endl;
+    cout << endl;
 }
